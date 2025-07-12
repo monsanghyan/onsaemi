@@ -1,0 +1,43 @@
+import cv2
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO("yolo11n.pt")  # load an official model
+
+accord = "rtsp://192.168.0.3" # 우리 카메라 주소(변경가능)
+cap = cv2.VideoCapture(accord)
+
+# 연속해서 분석하면 프래임 드랍이 일어나서 어느정도 텀을 두기
+time = 0
+
+while True:
+    time += 1
+    ret, frame = cap.read() # ret은 연결 유무, frame은 카메라에 인식된 사진
+    if not ret:
+        print("카메라 연결 실패")
+        break
+
+    cv2.imshow('Camera', frame) # 사진 출력
+
+    # yolo 공식사이트에서 코드 받아오기
+    # Predict with the model
+    if time % 10 == 0:
+        results = model(frame)  # predict on an image
+
+        # Access the results
+        for result in results:
+            xywh = result.boxes.xywh  # center-x, center-y, width, height, 카메라 크기
+            xywhn = result.boxes.xywhn  # normalized, 정교화된 카메라 크기
+            xyxy = result.boxes.xyxy  # top-left-x, top-left-y, bottom-right-x, bottom-right-y, 상자 크기
+            xyxyn = result.boxes.xyxyn  # normalized, 정교화된 상자 크기
+            names = [result.names[cls.item()] for cls in result.boxes.cls.int()]  # class name of each box, 객체 이름
+            confs = result.boxes.conf  # confidence score of each box, 신뢰성
+
+        print(names, confs)
+
+    # q키 누르면 실행 중지
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+# 카메라 연결 끊기, 띄운 창 끄기
+cap.release()
+cv2.destroyAllWindows()
