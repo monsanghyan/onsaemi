@@ -1,0 +1,23 @@
+import redis
+
+
+redis_pool = redis.ConnectionPool(host='hackathon.kro.kr', port=6379, db=0, max_connections=4, password='onsaemi')
+
+# with: 중복 방지 용도
+with redis.StrictRedis(connection_pool=redis_pool) as conn:
+
+    # name: keyname(테이블 이름임), key: field, value: value
+    # hset은 넣기
+    conn.hset('fire_detect', 'fire_outbreak', 'on')
+    conn.hset('fire_detect', 'latitue', '36.5000')
+    conn.hset('fire_detect', 'longitude', '127.123')
+
+with redis.StrictRedis(connection_pool=redis_pool) as conn:
+
+    # decode('utf-8'): 데이터베이스의 방식이 다르기에 오류나지 않도록 하는것
+    # hget은 가져오는거
+    outbreak = conn.hget('fire_detect', 'fire_outbreak').decode('utf-8')
+    latitude = conn.hget('fire_detect', 'latitue').decode('utf-8')
+    longitude = conn.hget('fire_detect', 'longitude').decode('utf-8')
+
+print(outbreak, latitude, longitude)
